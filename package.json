@@ -1,0 +1,23 @@
+{
+  "name": "clase-24-cookies-session-y-storage",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brotzumax/Clase-24-Cookies-Session-y-Storage.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brotzumax/Clase-24-Cookies-Session-y-Storage/issues"
+  },
+  "homepage": "https://github.com/brotzumax/Clase-24-Cookies-Session-y-Storage#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
