@@ -25,6 +25,16 @@ const message = new schema.Entity('messages', { author: author }, { idAttribute:
 const mensajeria = new schema.Entity('mensajeria', { messages: [message] }, { idAttribute: 'id' });
 
 
+//Cookies
+const cookieParser = require('cookie-parser');
+
+
+//Session
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const advancedOptions = { useNewUrlParser: true, useUnifiedTopology: true };
+
+
 //Métodos
 function print(objeto) {
     console.log(util.inspect(objeto, false, 12, true));
@@ -38,6 +48,15 @@ function convertirArray(array) {
     return nuevoArray;
 }
 
+function sessionPersistence(req, res, next) {
+    if (req.session.user) {
+        req.session.touch();
+        next();
+    } else {
+        res.redirect("/login");
+    }
+}
+
 
 //Inicio de servidor
 const app = express();
@@ -47,6 +66,19 @@ const io = new IOServer(httpServer);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(cookieParser());
+app.use(session({
+    store: MongoStore.create({
+        mongoUrl: 'mongodb+srv://admin:1234@ecommerce-backend.sfz5w6r.mongodb.net/?retryWrites=true&w=majority',
+        mongoOptions: advancedOptions
+    }),
+    secret: 'secreto',
+    resave: true,
+    saveUninitialized: true,
+    cookie: { maxAge: 60000 }
+}));
+
+
 let sqlProductos = new ClienteSQL(optionsMariaDB, "productos");
 
 
@@ -54,11 +86,26 @@ let sqlProductos = new ClienteSQL(optionsMariaDB, "productos");
 app.set('view engine', 'ejs');
 
 //Peticiones del servidor
-app.get("/", (req, res) => {
-    res.render("pages/index");
+app.get("/login", (req, res) => {
+    res.render("pages/login");
 });
 
-app.get("/api/productos-test", (req, res) => {
+app.post("/login", (req, res) => {
+    const username = req.body.txtUsuario;
+    req.session.user = username;
+    res.redirect('/');
+});
+
+app.get("/logout", (req, res) => {
+    res.render("pages/logout", { username: req.session.user });
+    req.session.destroy();
+});
+
+app.get("/", sessionPersistence, (req, res) => {
+    res.render("pages/index", { username: req.session.user });
+});
+
+app.get("/api/productos-test", sessionPersistence, (req, res) => {
     res.render("pages/testView");
 })
 
@@ -79,7 +126,7 @@ io.on('connection', function (socket) {
                 messages: convertirArray(data)
             };
             const mensajesNormalizados = normalize(chat, mensajeria);
-            print(mensajesNormalizados);
+            /* print(mensajesNormalizados); */
             io.sockets.emit('mensajes', mensajesNormalizados);
         })
         .catch((err) => console.log(err));
@@ -105,7 +152,7 @@ io.on('connection', function (socket) {
                     messages: convertirArray(data)
                 };
                 const mensajesNormalizados = normalize(chat, mensajeria);
-                print(mensajesNormalizados);
+                /* print(mensajesNormalizados); */
                 io.sockets.emit('mensajes', mensajesNormalizados);
             })
             .catch((err) => console.log(err));
